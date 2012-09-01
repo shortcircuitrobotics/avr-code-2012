@@ -16,6 +16,8 @@
 #define HMC6352_READ_EEPROM 0x72
 #define HMC6352_READ_HEADING 0x41
 
+uint8_t comp_invalid;		//wait until compass data is valid
+
 void compass_init();
 void compass_start();
 void compass_run();

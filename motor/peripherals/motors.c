@@ -11,8 +11,11 @@
 #include "../libs/trig_int.h"
 #include "compass.h"
 
-#define KP 4/10
-#define KD 3
+#define KP 1/10
+#define KD 1
+
+#define TURN_SPEED_MAX 30
+#define PLUS_MINUS_ERROR 2
 
 #define set_max(value, max) { if(value > max) value = max; else if(value < -max) value = -max; }
 
@@ -119,15 +122,21 @@ void motors_update(){
 		}
 	}
 
-	else if(motor.turn_to && !motor.drive){
+	else if(motor.turn_to && !motor.drive && !comp_invalid){
 		int16_t error, delta_error, p_out, d_out, speed;
-		error = -error_(compass_read_heading()/10, motor.angle);
+
+		error = error_(compass_read_heading()/10, motor.angle);
 		delta_error = error - pid.prev_err;
+
+		if((abs_(error) <= PLUS_MINUS_ERROR) && abs_(delta_error) < 2){
+			motor.turn_to=0;
+		}
 
 		p_out = error * KP;
 		d_out = delta_error * KD;
 
 		speed = motor.speed + p_out + d_out;
+		set_max(speed, TURN_SPEED_MAX);
 
 		if(speed > 0){
 			motor_all_set_counter_clockwise();

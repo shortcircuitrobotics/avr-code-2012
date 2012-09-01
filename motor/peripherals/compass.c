@@ -44,6 +44,7 @@ void compass_init(){
 		uart_writeline("Error: HMC6352 not connected!");
 		uart_async_send_all();
 	}
+	comp_invalid = 3;
 }
 
 void compass_start(){
@@ -77,6 +78,9 @@ void compass_run(){
 			if(temp != comp.heading){
 				comp.heading = temp;
 				comp.new_heading = 1;
+			}
+			if(comp_invalid > 0){
+				comp_invalid--;
 			}
 			comp.state = ST_IDLE;	// return to IDLE
 		}
