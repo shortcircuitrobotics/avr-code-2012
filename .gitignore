@@ -16,3 +16,6 @@ Release/
 *.launch
 
 .metadata/
+
+# local settings
+org.eclipse.cdt.managedbuilder.core.prefs
