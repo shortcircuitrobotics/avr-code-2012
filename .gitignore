@@ -1,0 +1,16 @@
+# Gitignore for Eclipse #
+#########################
+
+# Release Folder #
+##################
+Release/
+
+# gedit backups #
+#################
+*~
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
