@@ -27,11 +27,14 @@
 #define TSOP_14 1
 #define TSOP_15 5
 
-extern char* tsop_str [16];
+extern uint16_t tsop_data[16];
 
+extern char* tsop_str [16];
 
 uint8_t tsops_run(void);
 void adc_start_read(uint16_t* data);
+void tsops_sort(void);
+void tsops_raw(void);
 
 
 #endif /* TSOP_H_ */

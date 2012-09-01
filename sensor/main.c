@@ -12,6 +12,8 @@
 #include "libs/sys_timer.h"
 #include "libs/spi_slave.h"
 #include "libs/communication.h"
+#include "peripherals/adc.h"
+#include "peripherals/tsop.h"
 
 
 int main(void){
@@ -25,34 +27,21 @@ int main(void){
 
 	// Initialize Hardware
 	spi_slave_init(&send_data, &spi_end);	// SPI
-	_delay_ms(1);		// wait for compass to be ready
-	//sys_timer_init();	// System Timer
-	//sys_timer_set_compass_timeout(200);	// read compass every 500 ms
-	//sei();				// enable global interrupts
 
 	DDRD |= (1<<PD3);
+
+
 
 	while(1){
 		// Run FSM
 		uart_async_run();
+		adc_start_read(tsop_data);
+		while(tsops_run());
 
-		PORTD |= (1<<PD3);
-		_delay_us(15);
-		PORTD &= ~(1<<PD3);
-		_delay_ms(200);
 
-		// Check if there is new compass data
-		//if(compass_new_heading()){
-		//	uart_send_word(10, "Distance (cm):");
-		//	uart_endl();
-		//}
 	}
-
-
-	while(1){}
 
 	return 0;
 }
-
 
 
