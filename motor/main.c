@@ -35,9 +35,10 @@ int main(void){
 	sys_timer_set_compass_timeout(200);	// read compass every 500 ms
 	sei();				// enable global interrupts
 
-	motor.turn_to = 1;
+	motor.start_speed = 1;
+	motor.drive = 1;
 	motor.angle = 90;
-	motor.speed = 0;
+	motor.speed = 50;
 
 	/*motor_A_set_clockwise();
 	motor_A_set_speed(20);

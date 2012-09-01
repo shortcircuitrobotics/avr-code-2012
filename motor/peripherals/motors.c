@@ -11,9 +11,14 @@
 #include "../libs/trig_int.h"
 #include "compass.h"
 
-#define KP 1/10
+#define KP 1/1000
 #define KD 1
+#define KI 1/40
 
+#define I_MAX_ERROR 30
+#define I_MAX (0x12 * 10)
+
+#define START_SPEED_SCALING 100
 #define TURN_SPEED_MAX 30
 #define PLUS_MINUS_ERROR 2
 
@@ -22,9 +27,6 @@
 
 motor_data motor;
 
-/*
- * Initializes the hardware used to interface to the motor controllers
- */
 
 int16_t static inline error_(uint16_t a1, uint16_t a2){
 	if(abs_(a2-a1) <= 180){
@@ -37,6 +39,10 @@ int16_t static inline error_(uint16_t a1, uint16_t a2){
 			return (a2 - a1) - 360;
 	}
 }
+
+/*
+ * Initializes the hardware used to interface to the motor controllers
+ */
 
 void motors_init(){
 	// Motor Controller A
@@ -72,12 +78,21 @@ void motors_update(){
 
 	if(motor.drive && !motor.turn_to){
 
+		if(motor.start_speed < START_SPEED_SCALING){
+			motor.start_speed++;
+		}
+
 		int16_t speed_a, speed_b, speed_c;
 
 		//normal calculations
 	    speed_a = (int16_t)(-((int32_t)motor.speed * (int32_t)cos_(abs_(150 - motor.angle))) / TRIG_INT_SIN_90);
 	    speed_b = (int16_t)(-((int32_t)motor.speed * (int32_t)cos_(abs_(270 - motor.angle))) / TRIG_INT_SIN_90);
 	    speed_c = (int16_t)(-((int32_t)motor.speed * (int32_t)cos_(abs_(30 - motor.angle))) / TRIG_INT_SIN_90);
+
+	    speed_a = motor.start_speed * speed_a / START_SPEED_SCALING;
+	    speed_b = motor.start_speed * speed_b / START_SPEED_SCALING;
+	    speed_c = motor.start_speed * speed_c / START_SPEED_SCALING;
+
 
 		//Motor A
 		if(speed_a<0 && speed_a>-256){
@@ -123,19 +138,34 @@ void motors_update(){
 	}
 
 	else if(motor.turn_to && !motor.drive && !comp_invalid){
-		int16_t error, delta_error, p_out, d_out, speed;
+		int16_t error, delta_error, p_out, d_out, i_out, speed;
+
+		if(motor.start_speed < START_SPEED_SCALING){
+			motor.start_speed++;
+		}
 
 		error = error_(compass_read_heading()/10, motor.angle);
 		delta_error = error - pid.prev_err;
 
-		if((abs_(error) <= PLUS_MINUS_ERROR) && abs_(delta_error) < 2){
+		/*if((abs_(error) <= PLUS_MINUS_ERROR) && abs_(delta_error) < 2){
 			motor.turn_to=0;
+		}*/
+
+		if(abs_(error) < I_MAX_ERROR){
+			pid.integral_err += error;
+		}
+		if(pid.integral_err > I_MAX){
+			pid.integral_err = I_MAX;
+		}
+		if(pid.integral_err < -I_MAX){
+			pid.integral_err = -I_MAX;
 		}
 
-		p_out = error * KP;
+		p_out = error * KP * motor.speed;
 		d_out = delta_error * KD;
+		i_out = pid.integral_err * KI;
 
-		speed = motor.speed + p_out + d_out;
+		speed = motor.start_speed * (p_out + d_out + i_out) / START_SPEED_SCALING;
 		set_max(speed, TURN_SPEED_MAX);
 
 		if(speed > 0){

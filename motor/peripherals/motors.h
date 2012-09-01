@@ -20,6 +20,7 @@
 typedef struct{
 	int16_t angle;
 	int16_t speed;
+	uint8_t start_speed;	//start slowly and speed up with every interrupt
 	struct{
 		unsigned drive :1;
 		unsigned turn_to :1;
@@ -29,6 +30,7 @@ typedef struct{
 
 struct{
 	int16_t prev_err;
+	int16_t integral_err;
 }pid;
 
 extern motor_data motor;
